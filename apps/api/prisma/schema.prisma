@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────
+
+enum TaskPriority {
+  low
+  medium
+  high
+}
+
+enum BoardRole {
+  admin
+  editor
+  viewer
+}
+
+enum ActionType {
+  create
+  update
+  delete
+  move
+}
+
+enum EntityType {
+  board
+  list
+  task
+  comment
+}
+
+// ─── Models ──────────────────────────────────────────────────────────
+
+/// Linked to Supabase auth.users — credentials, email, and password
+/// are managed by Supabase Auth. This table stores application-specific
+/// profile data. A database trigger creates a row here on signup.
+model Profile {
+  id         String   @id @db.Uuid
+  email      String   @unique @db.VarChar(255)
+  first_name String   @db.VarChar(100)
+  last_name  String   @db.VarChar(100)
+  avatar_url String?
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  owned_boards    Board[]          @relation("BoardOwner")
+  board_members   BoardMember[]
+  created_tasks   Task[]           @relation("TaskCreator")
+  task_assignees  TaskAssignee[]
+  activity_logs   ActivityLog[]
+
+  @@map("profiles")
+}
+
+model Board {
+  id          String   @id @default(uuid()) @db.Uuid
+  owner_id    String   @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?
+  color       String   @default("#4472C4") @db.VarChar(7)
+  is_archived Boolean  @default(false)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  owner         Profile        @relation("BoardOwner", fields: [owner_id], references: [id], onDelete: Cascade)
+  members       BoardMember[]
+  lists         List[]
+  activity_logs ActivityLog[]
+
+  @@index([owner_id], name: "idx_boards_owner_id")
+  @@map("boards")
+}
+
+model BoardMember {
+  id        String    @id @default(uuid()) @db.Uuid
+  board_id  String    @db.Uuid
+  user_id   String    @db.Uuid
+  role      BoardRole @default(editor)
+  joined_at DateTime  @default(now())
+
+  // Relations
+  board Board   @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  user  Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([board_id, user_id])
+  @@index([user_id], name: "idx_board_members_user")
+  @@map("board_members")
+}
+
+model List {
+  id         String   @id @default(uuid()) @db.Uuid
+  board_id   String   @db.Uuid
+  name       String   @db.VarChar(255)
+  position   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  board Board  @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@map("lists")
+}
+
+model Task {
+  id           String       @id @default(uuid()) @db.Uuid
+  list_id      String       @db.Uuid
+  title        String       @db.VarChar(255)
+  description  String?
+  position     Int
+  priority     TaskPriority @default(medium)
+  due_date     DateTime?    @db.Date
+  is_completed Boolean      @default(false)
+  created_by   String       @db.Uuid
+  created_at   DateTime     @default(now())
+  updated_at   DateTime     @updatedAt
+
+  // Relations
+  list          List           @relation(fields: [list_id], references: [id], onDelete: Cascade)
+  creator       Profile        @relation("TaskCreator", fields: [created_by], references: [id], onDelete: Cascade)
+  assignees     TaskAssignee[]
+  activity_logs ActivityLog[]
+
+  @@index([list_id, position], name: "idx_tasks_list_position")
+  @@index([created_by], name: "idx_tasks_created_by")
+  @@map("tasks")
+}
+
+model TaskAssignee {
+  id          String   @id @default(uuid()) @db.Uuid
+  task_id     String   @db.Uuid
+  user_id     String   @db.Uuid
+  assigned_at DateTime @default(now())
+
+  // Relations
+  task Task    @relation(fields: [task_id], references: [id], onDelete: Cascade)
+  user Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([task_id, user_id])
+  @@index([user_id], name: "idx_task_assignees_user")
+  @@map("task_assignees")
+}
+
+model ActivityLog {
+  id          String     @id @default(uuid()) @db.Uuid
+  board_id    String     @db.Uuid
+  task_id     String?    @db.Uuid
+  user_id     String     @db.Uuid
+  action_type ActionType
+  entity_type EntityType
+  changes     Json?
+  created_at  DateTime   @default(now())
+
+  // Relations
+  board Board   @relation(fields: [board_id], references: [id], onDelete: Cascade)
+  task  Task?   @relation(fields: [task_id], references: [id], onDelete: SetNull)
+  user  Profile @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([board_id, created_at(sort: Desc)], name: "idx_activity_board_time")
+  @@map("activity_logs")
+}
