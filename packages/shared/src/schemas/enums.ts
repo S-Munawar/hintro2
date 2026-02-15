@@ -3,7 +3,7 @@ import { z } from "zod";
 // ─── Database Enums ──────────────────────────────────────────────────
 // Mirror PostgreSQL enums exactly as defined in the Prisma schema.
 
-export const TaskPriorityEnum = z.enum(["low", "medium", "high"]);
+export const TaskPriorityEnum = z.enum(["low", "medium", "high", "urgent"]);
 export type TaskPriority = z.infer<typeof TaskPriorityEnum>;
 
 export const BoardRoleEnum = z.enum(["admin", "editor", "viewer"]);

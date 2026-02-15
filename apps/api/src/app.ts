@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import express from "express";
+import { createServer } from "http";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -7,12 +8,18 @@ import rateLimit from "express-rate-limit";
 import { env } from "./config/env.js";
 import { logger } from "./utils/logger.js";
 import { errorHandler } from "./middleware/errorHandler.js";
+import { initSocketIO } from "./services/socketService.js";
 import boardRoutes from "./routes/boards.js";
 import taskRoutes from "./routes/tasks.js";
 
 // ─── Express App ─────────────────────────────────────────────────────
 
 const app: Express = express();
+const httpServer = createServer(app);
+
+// ─── Socket.IO ───────────────────────────────────────────────────────
+
+initSocketIO(httpServer);
 
 // ─── Global Middleware ───────────────────────────────────────────────
 
@@ -91,7 +98,7 @@ app.use(errorHandler);
 // ─── Start Server ────────────────────────────────────────────────────
 
 if (env.NODE_ENV !== "test") {
-  app.listen(env.PORT, () => {
+  httpServer.listen(env.PORT, () => {
     logger.info(`Server running on port ${env.PORT} in ${env.NODE_ENV} mode`);
   });
 }

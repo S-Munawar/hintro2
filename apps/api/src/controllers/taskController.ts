@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { taskService } from "../services/taskService.js";
+import { emitToBoard } from "../services/socketService.js";
 
 export const taskController = {
   /** GET /api/boards/:boardId/tasks */
@@ -30,6 +31,9 @@ export const taskController = {
   async createTask(req: Request, res: Response, next: NextFunction) {
     try {
       const task = await taskService.createTask(req.userId!, req.body);
+      const boardId = req.params.boardId as string;
+
+      emitToBoard(boardId, "task:created", { boardId, task });
 
       res.status(201).json({
         success: true,
@@ -61,6 +65,9 @@ export const taskController = {
     try {
       const taskId = req.params.taskId as string;
       const task = await taskService.updateTask(taskId, req.userId!, req.body);
+      const boardId = req.params.boardId as string;
+
+      emitToBoard(boardId, "task:updated", { boardId, task });
 
       res.json({
         success: true,
@@ -76,7 +83,10 @@ export const taskController = {
   async deleteTask(req: Request, res: Response, next: NextFunction) {
     try {
       const taskId = req.params.taskId as string;
+      const boardId = req.params.boardId as string;
       await taskService.deleteTask(taskId, req.userId!);
+
+      emitToBoard(boardId, "task:deleted", { boardId, taskId, listId: "" });
 
       res.json({
         success: true,
@@ -92,6 +102,9 @@ export const taskController = {
     try {
       const taskId = req.params.taskId as string;
       const task = await taskService.moveTask(taskId, req.userId!, req.body);
+      const boardId = req.params.boardId as string;
+
+      emitToBoard(boardId, "task:moved", { boardId, task });
 
       res.json({
         success: true,
@@ -112,6 +125,11 @@ export const taskController = {
         req.userId!,
         req.body.user_id,
       );
+      const boardId = req.params.boardId as string;
+
+      // Re-fetch updated task to broadcast full state
+      const updatedTask = await taskService.getTaskById(taskId);
+      emitToBoard(boardId, "task:updated", { boardId, task: updatedTask });
 
       res.status(201).json({
         success: true,
@@ -128,7 +146,11 @@ export const taskController = {
     try {
       const taskId = req.params.taskId as string;
       const targetUserId = req.params.userId as string;
+      const boardId = req.params.boardId as string;
       await taskService.unassignUser(taskId, req.userId!, targetUserId);
+
+      const updatedTask = await taskService.getTaskById(taskId);
+      emitToBoard(boardId, "task:updated", { boardId, task: updatedTask });
 
       res.json({
         success: true,

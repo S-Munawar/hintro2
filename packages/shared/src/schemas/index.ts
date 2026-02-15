@@ -37,4 +37,5 @@ export {
   AssignUserInput,
   PaginationQuery,
   TaskFilterQuery,
+  ActivityFilterQuery,
 } from "./inputs.js";

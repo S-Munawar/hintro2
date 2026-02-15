@@ -35,20 +35,25 @@ export default function Modal({ isOpen, onClose, title, children, size = "md" }:
   return (
     <div
       ref={overlayRef}
+      className="modal-overlay"
       onClick={(e) => {
         if (e.target === overlayRef.current) onClose();
       }}
     >
-      <div>
+      <div className={`modal-content modal-${size} mx-4`}>
         {title && (
-          <div>
-            <h2>{title}</h2>
-            <button onClick={onClose} type="button">
-              <X size={20} />
+          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
+            <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+            <button
+              onClick={onClose}
+              type="button"
+              className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+              <X size={18} />
             </button>
           </div>
         )}
-        <div>{children}</div>
+        <div className="px-6 py-5">{children}</div>
       </div>
     </div>
   );

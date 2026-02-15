@@ -21,7 +21,7 @@ export default function AuthGuard({ children }: AuthGuardProps) {
 
   if (isLoading) {
     return (
-      <div>
+      <div className="flex items-center justify-center h-screen">
         <Loader size="lg" />
       </div>
     );

@@ -22,11 +22,9 @@ export default function AuthCallbackPage() {
   }, [router]);
 
   return (
-    <div>
-      <div>
-        <Loader size="lg" />
-        <p>Completing sign in...</p>
-      </div>
+    <div className="flex flex-col items-center justify-center h-screen gap-5 auth-gradient">
+      <Loader size="lg" />
+      <p className="text-sm text-slate-500 font-medium">Completing sign in...</p>
     </div>
   );
 }

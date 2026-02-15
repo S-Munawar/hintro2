@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { boardService } from "../services/boardService.js";
+import { emitToBoard } from "../services/socketService.js";
 
 export const boardController = {
   /** GET /api/boards */
@@ -56,6 +57,8 @@ export const boardController = {
       const boardId = req.params.boardId as string;
       const board = await boardService.updateBoard(boardId, req.userId!, req.body);
 
+      emitToBoard(boardId, "board:updated", { boardId, board });
+
       res.json({
         success: true,
         data: board,
@@ -92,6 +95,8 @@ export const boardController = {
         req.body.role,
       );
 
+      emitToBoard(boardId, "member:added", { boardId, member });
+
       res.status(201).json({
         success: true,
         data: member,
@@ -108,6 +113,8 @@ export const boardController = {
       const boardId = req.params.boardId as string;
       const targetUserId = req.params.userId as string;
       await boardService.removeMember(boardId, req.userId!, targetUserId);
+
+      emitToBoard(boardId, "member:removed", { boardId, userId: targetUserId });
 
       res.json({
         success: true,

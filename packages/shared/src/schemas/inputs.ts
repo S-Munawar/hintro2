@@ -41,7 +41,7 @@ export type UpdateBoardMemberInput = z.infer<typeof UpdateBoardMemberInput>;
 
 export const CreateListInput = z.object({
   name: z.string().min(1).max(255),
-  position: z.number().int().nonnegative(),
+  position: z.number().int().nonnegative().optional(),
 });
 export type CreateListInput = z.infer<typeof CreateListInput>;
 
@@ -54,6 +54,7 @@ export type UpdateListInput = z.infer<typeof UpdateListInput>;
 // ── Task ─────────────────────────────────────────────────────────────
 
 export const CreateTaskInput = z.object({
+  list_id: uuidSchema,
   title: z.string().min(1).max(255),
   description: z.string().nullable().optional(),
   priority: TaskPriorityEnum.optional(),
@@ -101,5 +102,14 @@ export const TaskFilterQuery = PaginationQuery.extend({
   search: z.string().optional(),
   priority: TaskPriorityEnum.optional(),
   is_completed: z.coerce.boolean().optional(),
+  list_id: uuidSchema.optional(),
+  assigned_to: uuidSchema.optional(),
 });
 export type TaskFilterQuery = z.infer<typeof TaskFilterQuery>;
+
+// ── Activity Filter ──────────────────────────────────────────────────
+
+export const ActivityFilterQuery = PaginationQuery.extend({
+  task_id: uuidSchema.optional(),
+});
+export type ActivityFilterQuery = z.infer<typeof ActivityFilterQuery>;
