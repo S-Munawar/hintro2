@@ -163,7 +163,7 @@ docker compose logs -f api web
 | `api`   | 5000 | Express API + Socket.IO |
 | `web`   | 3000 | Next.js frontend        |
 
-> Production deployment uses **Google Cloud Run** — see [Deployment](#deployment) below.
+> Production deployment uses **Google Compute Engine** — see [Deployment](#deployment) below.
 
 ---
 
