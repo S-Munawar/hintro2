@@ -39,7 +39,7 @@ export default function TaskCard({ task, onClick, isOverlay }: TaskCardProps) {
       {...listeners}
       role="button"
       tabIndex={0}
-      onClick={(e) => {
+      onClick={() => {
         // Prevent opening the detail modal while dragging
         if (isDragging) return;
         onClick();
